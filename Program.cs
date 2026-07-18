@@ -49,6 +49,15 @@ builder.Services.AddScoped<DropboxClient>(sp =>
 builder.Services.AddDbContext<PosdbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Db")));
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        policy => policy.WithOrigins("http://localhost:5173") // Vite default port
+                        .AllowAnyHeader()
+                        .AllowAnyMethod());
+});
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -57,6 +66,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+
+app.UseCors("AllowReactApp");
 
 app.UseHttpsRedirection();
 

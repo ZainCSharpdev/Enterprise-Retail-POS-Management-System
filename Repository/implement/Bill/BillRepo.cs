@@ -99,13 +99,6 @@ namespace POSbackend.Repository.implement.Bill
             return true;
         }
 
-        // Example PDF generator stub
-        private byte[] GenerateBillPdf(BillDto bill)
-        {
-            // Use QuestPDF or iTextSharp here
-            // Return byte[] of PDF
-            return new byte[0];
-        }
     }
 
 }
