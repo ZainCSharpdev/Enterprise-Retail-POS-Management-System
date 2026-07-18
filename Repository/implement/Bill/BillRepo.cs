@@ -99,6 +99,11 @@ namespace POSbackend.Repository.implement.Bill
             return true;
         }
 
+        private byte[] GenerateBillPdf(BillDto bill)
+        {
+            return new byte[0];
+        }
+
     }
 
 }
