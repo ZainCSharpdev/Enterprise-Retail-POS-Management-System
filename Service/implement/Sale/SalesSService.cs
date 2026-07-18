@@ -57,5 +57,33 @@ namespace POSbackend.Service.implement.Sale
         {
             return await _saleRepo.GetAllSalesAsync();
         }
+
+
+
+
+
+        // ==========================================
+        // ADDED: Sales Detail Line Item Implementation
+        // ==========================================
+
+        public async Task<IEnumerable<SalesDetailsDto>> GetSaleDetailsAsync(int saleId)
+        {
+            return await _saleDetailRepo.GetSaleDetailsAsync(saleId);
+        }
+
+        public async Task AddSalesDetailsAsync(SalesDetailsDto sale)
+        {
+            await _saleDetailRepo.AddSaleDetailAsync(sale);
+        }
+
+        public async Task<SalesDetailsDto?> UpdateSaleDetailAsync(SalesDetailsDto sale)
+        {
+            return await _saleDetailRepo.UpdateSaleDetailAsync(sale);
+        }
+
+        public async Task<bool> DeleteSaleDetailAsync(int saleDetailId)
+        {
+            return await _saleDetailRepo.DeleteSaleDetailAsync(saleDetailId);
+        }
     }
 }
