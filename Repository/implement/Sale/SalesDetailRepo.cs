@@ -49,7 +49,6 @@ namespace POSbackend.Repository.implement.Sale
             {
                 sale.TotalAmount = sale.SaleDetails.Sum(sd => sd.TotalPrice);
                 sale.NetAmount = sale.TotalAmount - (sale.Discount ?? 0) + (sale.Tax ?? 0);
-                _context.Sales.Add(sale);
                 await _context.SaveChangesAsync();
             }
         }
