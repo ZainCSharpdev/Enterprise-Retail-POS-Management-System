@@ -31,10 +31,13 @@ namespace POSbackend.Controllers
             return Ok(updated);
         }
 
+        // FIX: Bound variables to the incoming JSON request body payload from React
         [HttpPost("finalize/{saleId}")]
-        public async Task<IActionResult> Finalize(int saleId, string method, decimal discount, decimal tax)
+        public async Task<IActionResult> Finalize(int saleId, [FromBody] FinalizeSaleRequest request)
         {
-            var finalized = await _saleService.FinalizeSaleAsync(saleId, method, discount, tax);
+            if (request == null) return BadRequest("Checkout parameters cannot be null.");
+
+            var finalized = await _saleService.FinalizeSaleAsync(saleId, request.Method, request.Discount, request.Tax);
             if (finalized == null) return NotFound();
             return Ok(finalized);
         }
@@ -57,7 +60,6 @@ namespace POSbackend.Controllers
             return Ok();
         }
 
-
         [HttpPut("detail")]
         public async Task<IActionResult> UpdateSaleDetail([FromBody] SalesDetailsDto detail)
         {
@@ -76,13 +78,13 @@ namespace POSbackend.Controllers
 
             return NoContent();
         }
-
-        public class FinalizeSaleRequest
-        {
-            public string Method { get; set; } = "CARD";
-            public decimal Discount { get; set; }
-            public decimal Tax { get; set; }
-        }
     }
 
+    // Ensure these DTO wrapper classes are accessible by the binding layer
+    public class FinalizeSaleRequest
+    {
+        public string Method { get; set; } = "CARD";
+        public decimal Discount { get; set; }
+        public decimal Tax { get; set; }
+    }
 }
