@@ -11,9 +11,9 @@ namespace POSbackend.Controllers
     public class BillController(IBillService _billService) : ControllerBase
     {
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] BillDto bill)
+        public async Task<IActionResult> Create(int saleId)
         {
-            var created = await _billService.CreateBillAsync(bill);
+            var created = await _billService.CreateBillAsync(saleId);
             return Ok(created);
         }
 

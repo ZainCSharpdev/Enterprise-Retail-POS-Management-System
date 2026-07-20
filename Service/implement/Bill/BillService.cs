@@ -56,16 +56,13 @@ namespace POSbackend.Service.implement.Bill
                 Amount = saleHeader.TotalAmount,
                 PdfUrl = billDto.PdfUrl,
                 BillImage = billDto.BillImage,
-                Status = "Open",
+                Status = "Paid",
                 InsertedDate = DateTime.Now,
                 CustomerNumber = long.Parse(saleHeader.CustomerNumber)
             };
 
-            await _context.Bills.AddAsync(newBill);
-            await _context.SaveChangesAsync();
-
-            billDto.BillId = newBill.BillId;
-            return billDto;
+            
+            return await _billRepo.CreateBillAsync(newBill);
         }
 
         private byte[] GenerateBillPdf(BillDto bill, Models.Sale saleHeader,List<SaleDetail> saleDetails)

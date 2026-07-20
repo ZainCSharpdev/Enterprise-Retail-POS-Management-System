@@ -31,7 +31,7 @@ builder.Services.AddScoped<IUserRepo,UserRepo>();
 
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ISalesService, SalesSService>();
-//builder.Services.AddScoped<IBillService, BillService>();
+builder.Services.AddScoped<IBillService, BillService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 // Add services to the container.

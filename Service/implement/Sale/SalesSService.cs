@@ -4,11 +4,12 @@ using POSbackend.DTO.Sale;
 using POSbackend.Repository.Interface.Bill;
 using POSbackend.Repository.Interface.Payment;
 using POSbackend.Repository.Interface.Sales;
+using POSbackend.Service.Interface.Bill;
 using POSbackend.Service.Interface.Sales;
 
 namespace POSbackend.Service.implement.Sale
 {
-    public class SalesSService(ISaleRepo _saleRepo, ISaleDetailRepo _saleDetailRepo, IPaymentRepo _paymentRepo, IBillRepo _billRepo) : ISalesService
+    public class SalesSService(ISaleRepo _saleRepo, ISaleDetailRepo _saleDetailRepo, IPaymentRepo _paymentRepo, IBillService _billService) : ISalesService
     {
         public async Task<SaleDto?> CreateSaleAsync(SaleDto sale, List<SalesDetailsDto> details)
         {
@@ -38,17 +39,8 @@ namespace POSbackend.Service.implement.Sale
             await _paymentRepo.AddPaymentAsync(payment);
 
             // 3. Generate bill
-            var bill = new BillDto
-            {
-                SaleId = saleId,
-                Amount = finalizedSale.NetAmount,
-                Status = "Paid",
-                InsertedDate = DateTime.Now,
-                Name = finalizedSale.CustomerNumber.ToString(),
-                Email = finalizedSale.CustomerNumber.ToString(),
-                CustomerNumber = finalizedSale.CustomerNumber
-            };
-            await _billRepo.CreateBillAsync(bill);
+
+            await _billService.CreateBillAsync(saleId);
 
             return finalizedSale;
         }
