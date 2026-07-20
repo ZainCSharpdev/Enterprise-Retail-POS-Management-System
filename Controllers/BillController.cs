@@ -10,10 +10,14 @@ namespace POSbackend.Controllers
     [ApiController]
     public class BillController(IBillService _billService) : ControllerBase
     {
-        [HttpPost]
+        [HttpPost("sale/{saleid}")]
         public async Task<IActionResult> Create(int saleId)
         {
             var created = await _billService.CreateBillAsync(saleId);
+            if(created == null)
+            {
+                return NotFound(new { message = $"Sale ID : {saleId} not found. " });
+            }
             return Ok(created);
         }
 
