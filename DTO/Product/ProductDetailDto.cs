@@ -9,7 +9,7 @@
         public string ManufacturerName { get; set; }
         public int TotalQuantity { get; set; }
         public decimal Price { get; set; }
-        public DateOnly ExpiryDate { get; set; }
+        public DateOnly? ExpiryDate { get; set; }
         public decimal Unit_Price { get; set; }
         public string SetSize { get; set; }
         public long BatchNumber { get; set; }

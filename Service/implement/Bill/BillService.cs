@@ -2,7 +2,9 @@
 using Dropbox.Api.Files;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
+using Microsoft.EntityFrameworkCore;
 using POSbackend.DTO.Bill;
+using POSbackend.DTO.Sale;
 using POSbackend.Models;
 using POSbackend.Repository.Interface.Bill;
 using POSbackend.Service.Interface.Bill;
@@ -11,45 +13,62 @@ namespace POSbackend.Service.implement.Bill
 {
     public class BillService(PosdbContext _context, DropboxClient _dropbox, IBillRepo _billRepo) : IBillService
     {
-        public async Task<BillDto?> CreateBillAsync(BillDto bill)
+        public async Task<BillDto?> CreateBillAsync(int saleId)
         {
-            byte[] pdf = GenerateBillPdf(bill);
+            var saleHeader = await _context.Sales
+                 .FirstOrDefaultAsync(s => s.SaleId == saleId);
 
-            var fileName = $"bill_{bill.SaleId}_{DateTime.Now:yyyyMMddHHmmss}.pdf";
-            using (var memStream = new MemoryStream(pdf))
+            if(saleHeader == null) return null;
+
+            var saleDetails = await _context.SaleDetails
+                .Where(sd => sd.SaleId == saleId)
+                .Include(sd => sd.Product)
+                .ToListAsync();
+
+            var billDto = new BillDto
+            {
+                SaleId = saleId,
+                CustomerNumber = long.Parse(saleHeader.CustomerNumber),
+                Amount = saleHeader.NetAmount,
+                Status = "Completed",
+                InsertedDate = DateTime.Now
+            };
+
+            byte[] pdf = GenerateBillPdf(billDto, saleHeader, saleDetails);
+
+            var fileName = $"bill_sale_{saleId}_{DateTime.Now:yyyyMMddHHmss}.pdf";
+            using (var memStreamed = new MemoryStream(pdf))
             {
                 var uploadResult = await _dropbox.Files.UploadAsync(
-                    $"/Bills/{fileName}",
+                    $"Bills/{fileName}",
                     WriteMode.Overwrite.Instance,
-                    body: memStream);
+                    body: memStreamed);
 
                 var link = await _dropbox.Sharing.CreateSharedLinkWithSettingsAsync(uploadResult.PathLower);
-                bill.PdfUrl = link.Url;
-                bill.BillImage = $"{link.Url}?raw=1"; // preview image
+                billDto.PdfUrl = link.Url;
+                billDto.BillImage = $"{link.Url}?raw=1";
             }
 
-            // 3. Save in DB
             var newBill = new Models.Bill
             {
-                SaleId = bill.SaleId,
+                SaleId = saleId,
                 BillDate = DateTime.Now,
-                Amount = bill.Amount,
-                PdfUrl = bill.PdfUrl,
-                BillImage = bill.BillImage,
+                Amount = saleHeader.TotalAmount,
+                PdfUrl = billDto.PdfUrl,
+                BillImage = billDto.BillImage,
                 Status = "Open",
                 InsertedDate = DateTime.Now,
-                Email = bill.Email,
-                Name = bill.Name
+                CustomerNumber = long.Parse(saleHeader.CustomerNumber)
             };
 
             await _context.Bills.AddAsync(newBill);
             await _context.SaveChangesAsync();
 
-            bill.BillId = newBill.BillId;
-            return bill;
+            billDto.BillId = newBill.BillId;
+            return billDto;
         }
 
-        private byte[] GenerateBillPdf(BillDto bill)
+        private byte[] GenerateBillPdf(BillDto bill, Models.Sale saleHeader,List<SaleDetail> saleDetails)
         {
             using (var ms = new MemoryStream())
             {
@@ -62,10 +81,27 @@ namespace POSbackend.Service.implement.Bill
                 doc.Add(new Paragraph("Invoice / Bill", titleFont));
                 doc.Add(new Paragraph($"Bill ID: {bill.BillId}"));
                 doc.Add(new Paragraph($"Sale ID: {bill.SaleId}"));
-                doc.Add(new Paragraph($"Customer: {bill.Name} ({bill.Email})"));
+                doc.Add(new Paragraph($"Customer: {bill.CustomerNumber})"));
                 doc.Add(new Paragraph($"Date: {DateTime.Now:dd-MMM-yyyy}"));
-                doc.Add(new Paragraph($"Amount: {bill.Amount:C}"));
-                doc.Add(new Paragraph($"Status: {bill.Status}"));
+                doc.Add(new Paragraph(" "));
+
+                var table = new PdfPTable(4);
+                table.AddCell("Product");
+                table.AddCell("Qty");
+                table.AddCell("Unit Price");
+                table.AddCell("Total Price");
+
+                foreach(var sd in saleDetails)
+                {
+                    table.AddCell(sd.Product.ProductName);
+                    table.AddCell(sd.Qty.ToString());
+                    table.AddCell(sd.UnitPrice.ToString("C"));
+                    table.AddCell(sd.TotalPrice.ToString("C"));
+                }
+
+                doc.Add(table);
+                doc.Add(new Paragraph(" "));
+                doc.Add(new Paragraph($"Grand Total : {saleHeader.TotalAmount:C}", titleFont));
 
                 doc.Close();
                 return ms.ToArray();

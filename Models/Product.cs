@@ -19,7 +19,7 @@ public partial class Product
 
     public decimal Price { get; set; }
 
-    public DateOnly ExpiryDate { get; set; }
+    public DateOnly? ExpiryDate { get; set; }
 
     public decimal UnitPrice { get; set; }
 

@@ -35,7 +35,9 @@ public partial class PosdbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
+
     }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Batch>(entity =>
@@ -57,15 +59,9 @@ public partial class PosdbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.BillImage).HasMaxLength(500);
-            entity.Property(e => e.Email)
-                .HasMaxLength(255)
-                .IsUnicode(false);
             entity.Property(e => e.InsertedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.Name)
-                .HasMaxLength(255)
-                .IsUnicode(false);
             entity.Property(e => e.PdfUrl).HasMaxLength(500);
             entity.Property(e => e.Status)
                 .HasMaxLength(255)

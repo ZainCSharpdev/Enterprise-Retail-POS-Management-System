@@ -4,48 +4,28 @@ using Microsoft.EntityFrameworkCore;
 using POSbackend.DTO.Bill;
 using POSbackend.Models;
 using POSbackend.Repository.Interface.Bill;
+using static Dropbox.Api.Riviera.FileIdOrUrl;
 
 namespace POSbackend.Repository.implement.Bill
 {
-    public class BillRepo(PosdbContext _context, DropboxClient _dropbox) : IBillRepo
+    public class BillRepo(PosdbContext _context) : IBillRepo
     {
-        public async Task<BillDto?> CreateBillAsync(BillDto bill)
+        public async Task<BillDto?> CreateBillAsync(Models.Bill bill)
         {
-            var pdfBytes = GenerateBillPdf(bill);
-
-            // 2. Upload to Dropbox
-            var fileName = $"bill_{bill.SaleId}_{DateTime.Now:yyyyMMddHHmmss}.pdf";
-            using (var memStream = new MemoryStream(pdfBytes))
-            {
-                var uploadResult = await _dropbox.Files.UploadAsync(
-                    $"/Bills/{fileName}",
-                    WriteMode.Overwrite.Instance,
-                    body: memStream);
-
-                var link = await _dropbox.Sharing.CreateSharedLinkWithSettingsAsync(uploadResult.PathLower);
-                bill.PdfUrl = link.Url;
-                bill.BillImage = $"{link.Url}?raw=1"; // preview image if needed
-            }
-
-            // 3. Save in DB
-            var newBill = new Models.Bill
-            {
-                SaleId = bill.SaleId,
-                BillDate = DateTime.Now,
-                Amount = bill.Amount,
-                PdfUrl = bill.PdfUrl,
-                BillImage = bill.BillImage,
-                Status = "Open",
-                InsertedDate = DateTime.Now,
-                Email = bill.Email,
-                Name = bill.Name
-            };
-
-            await _context.Bills.AddAsync(newBill);
+            await _context.Bills.AddAsync(bill);
             await _context.SaveChangesAsync();
 
-            bill.BillId = newBill.BillId;
-            return bill;
+            return new BillDto 
+            {
+                BillId = bill.BillId,
+                SaleId = bill.SaleId ?? 0,
+                PdfUrl = bill.PdfUrl,
+                BillImage = bill.BillImage,
+                InsertedDate = bill.InsertedDate ?? DateTime.Now,
+                Status = bill.Status!,
+                Amount = bill.Amount ?? 0,
+                CustomerNumber = bill.CustomerNumber ?? 0,
+            };
         }
 
         public async Task<IEnumerable<BillDto>> GetBillsBySaleAsync(int saleId)
@@ -59,10 +39,7 @@ namespace POSbackend.Repository.implement.Bill
                     PdfUrl = b.PdfUrl,
                     BillImage = b.BillImage,
                     InsertedDate = (DateTime)b.InsertedDate,
-                    Status = b.Status,
-                    Amount = (decimal)b.Amount,
-                    Email = b.Email,
-                    Name = b.Name
+                    CustomerNumber = (long)b.CustomerNumber
                 })
                 .ToListAsync();
         }
@@ -82,10 +59,7 @@ namespace POSbackend.Repository.implement.Bill
                 PdfUrl = bill.PdfUrl,
                 BillImage = bill.BillImage,
                 InsertedDate = (DateTime)bill.InsertedDate,
-                Status = bill.Status,
-                Amount = (decimal)bill.Amount,
-                Email = bill.Email,
-                Name = bill.Name
+                CustomerNumber = (long)bill.CustomerNumber
             };
         }
 
@@ -97,11 +71,6 @@ namespace POSbackend.Repository.implement.Bill
             bill.Status = "Cancelled";
             await _context.SaveChangesAsync();
             return true;
-        }
-
-        private byte[] GenerateBillPdf(BillDto bill)
-        {
-            return new byte[0];
         }
 
     }

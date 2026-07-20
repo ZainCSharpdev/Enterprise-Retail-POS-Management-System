@@ -104,14 +104,23 @@ namespace POSbackend.Repository.implement.Product
             product.ExpiryDate = details.ExpiryDate;
             product.UnitPrice = details.Unit_Price;
             product.SetSize = details.SetSize;
-            product.Categoryid = await _context.Categories
+            var categoryid = await _context.Categories
                 .Where(c => c.CategoryName == details.CategoryName)
-                .Select(c => c.Categoryid)
+                .Select(c => (int?)c.Categoryid)
                 .FirstOrDefaultAsync();
-            product.Batchid = await _context.Batches
-                .Where(b => b.Batchnumber == (int)details.BatchNumber)
-                .Select(b => b.Batchid)
-                .FirstOrDefaultAsync();
+            if (categoryid == null) return null;
+            product.Categoryid = categoryid.Value;
+
+            var batch = await _context.Batches
+                .FirstOrDefaultAsync(b => b.Batchnumber == details.BatchNumber);
+
+            if(batch == null)
+            {
+                batch = new Batch { Batchnumber = (int)details.BatchNumber };
+                _context.Batches.Add(batch);
+                await _context.SaveChangesAsync();
+            }
+            product.Batchid = batch.Batchid;
             await _context.SaveChangesAsync();
             return details;
         }

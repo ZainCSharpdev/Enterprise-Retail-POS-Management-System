@@ -19,11 +19,9 @@ public partial class Bill
 
     public decimal? Amount { get; set; }
 
-    public string? Email { get; set; }
-
-    public string? Name { get; set; }
-
     public DateTime? BillDate { get; set; }
+
+    public long? CustomerNumber { get; set; }
 
     public virtual Sale? Sale { get; set; }
 }
