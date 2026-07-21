@@ -19,8 +19,13 @@ namespace POSbackend.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateSaleRequest request)
         {
-            var created = await _saleService.CreateSaleAsync(request.Sale, request.Details);
-            return Ok(created);
+
+            var result = await _saleService.CreateSaleAsync(request.Sale, request.Details);
+
+            if (result == null)
+                return BadRequest("Could not create sale.");
+
+            return Ok(result);
         }
 
         [HttpPut]

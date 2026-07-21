@@ -31,7 +31,7 @@ namespace POSbackend.Service.implement.Sale
             var payment = new PaymentDto
             {
                 SaleId = saleId,
-                Amount = finalizedSale.NetAmount,
+                Amount = (decimal)finalizedSale.NetAmount,
                 Method = method,
                 Status = "Paid",
                 CreatedAt = DateTime.Now

@@ -12,6 +12,7 @@ namespace POSbackend.Repository.implement.Sale
             return await _context.Sales
                 .Select(s => new SaleDto
                 {
+                    SaleId = s.SaleId,
                     CustomerNumber = long.Parse(s.CustomerNumber),
                     status = s.Status,
                     Method = s.Method,
@@ -25,6 +26,7 @@ namespace POSbackend.Repository.implement.Sale
                 .Where(s => s.SaleId == saleId)
                 .Select(s => new SaleDto
                 {
+                    SaleId = (int)s.SaleId,
                     CustomerNumber = long.Parse(s.CustomerNumber),
                     status = s.Status,
                     Method = s.Method,
@@ -38,6 +40,7 @@ namespace POSbackend.Repository.implement.Sale
                 .Where(s => s.SaleDate == SaleDate)
                 .Select(s => new SaleDto
                 {
+                    SaleId = s.SaleId,
                     CustomerNumber = long.Parse(s.CustomerNumber),
                     status = s.Status,
                     Method = s.Method,
@@ -51,6 +54,7 @@ namespace POSbackend.Repository.implement.Sale
                 .Where(s => s.CustomerNumber == customerNumber.ToString())
                 .Select(s => new SaleDto
                 {
+                    SaleId = s.SaleId,
                     CustomerNumber = long.Parse(s.CustomerNumber),
                     status = s.Status,
                     Method = s.Method,
@@ -64,6 +68,7 @@ namespace POSbackend.Repository.implement.Sale
                 .Where(s => s.SaleDate >= startDate && s.SaleDate <= endDate)
                 .Select(s => new SaleDto
                 {
+                    SaleId = s.SaleId,
                     CustomerNumber = long.Parse(s.CustomerNumber),
                     status = s.Status,
                     Method = s.Method,
@@ -81,29 +86,28 @@ namespace POSbackend.Repository.implement.Sale
 
         public async Task<SaleDto?> CreateSaleAync(SaleDto sale, List<SalesDetailsDto> details)
         {
-            long customerNumber = GenerateCustomerNumber();
-            var customer = new Models.Customer
+            try
             {
-                CustomerNumber = customerNumber,
-            };
-            _context.Customers.Add(customer);
-            await _context.SaveChangesAsync();
+                long customerNumber = GenerateCustomerNumber();
+                var customer = new Models.Customer 
+                {
+                    CustomerNumber = customerNumber 
+                };
+                _context.Customers.Add(customer);
+                await _context.SaveChangesAsync();
 
-            var newSale = new Models.Sale
-            {
-                SaleDate = DateTime.Now,
-                CustomerNumber = customerNumber.ToString(), // FIX: Uses generated token, not 0 from front-end
-                Status = "InProcess",
-                Method = sale.Method,
-                CreatedDate = DateTime.Now
-            };
+                var newSale = new Models.Sale
+                {
+                    SaleDate = DateTime.Now,
+                    CustomerNumber = customerNumber.ToString(),
+                    Status = "InProcess",
+                    Method = sale.Method,
+                    CreatedDate = DateTime.Now
+                };
 
-            await _context.Sales.AddAsync(newSale);
-            await _context.SaveChangesAsync(); // Generates newSale.SaleId database identity primary key
+                await _context.Sales.AddAsync(newSale);
+                await _context.SaveChangesAsync();
 
-            // Add line items if any are passed
-            if (details != null && details.Count > 0)
-            {
                 foreach (var d in details)
                 {
                     var saleDetail = new SaleDetail
@@ -112,33 +116,33 @@ namespace POSbackend.Repository.implement.Sale
                         ProductId = (int)d.ProductId,
                         Qty = (int)d.Quantity,
                         UnitPrice = (decimal)d.UnitPrice,
-                        TotalPrice = (decimal)((decimal)d.Quantity * d.UnitPrice)
+                        TotalPrice = (decimal)(d.Quantity * d.UnitPrice)
                     };
                     await _context.SaleDetails.AddAsync(saleDetail);
                 }
+
                 await _context.SaveChangesAsync();
 
                 newSale.TotalAmount = (decimal)details.Sum(x => x.Quantity * x.UnitPrice);
+                newSale.NetAmount = (newSale.TotalAmount - (sale.Discount ?? 0)) + (sale.Tax ?? 0);
+
+                _context.Sales.Update(newSale);
+                await _context.SaveChangesAsync();
+
+                sale.SaleId = newSale.SaleId;
+                sale.CustomerNumber = customerNumber;
+                sale.SaleDate = newSale.SaleDate;
+                sale.TotalAmount = newSale.TotalAmount;
+                sale.NetAmount = newSale.NetAmount;
+                sale.status = newSale.Status;
+
+                return sale;
             }
-            else
+            catch (Exception ex)
             {
-                newSale.TotalAmount = 0;
+                Console.WriteLine($"Error creating sale: {ex}");
+                return null;
             }
-
-            newSale.NetAmount = (newSale.TotalAmount - (sale.Discount ?? 0)) + (sale.Tax ?? 0);
-
-            _context.Sales.Update(newSale);
-            await _context.SaveChangesAsync();
-
-            // CRITICAL FIX: Explicitly map identity values to the returning DTO properties
-            sale.SaleId = newSale.SaleId;            // <-- THIS FIXES THE REACT "UNDEFINED" / NOT RETRIEVED ERROR
-            sale.CustomerNumber = customerNumber;    // <-- Passes the autogenerated tracking number to the frontend
-            sale.SaleDate = newSale.SaleDate;
-            sale.TotalAmount = newSale.TotalAmount;
-            sale.NetAmount = newSale.NetAmount;
-            sale.status = newSale.Status;
-
-            return sale;
         }
 
         public async Task<SaleDto?> UpdateSaleAync(SaleDto sale, List<SalesDetailsDto> details)

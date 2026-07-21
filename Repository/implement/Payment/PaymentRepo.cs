@@ -31,7 +31,7 @@ namespace POSbackend.Repository.implement.Payment
             {
                 SaleId = payment.SaleId,
                 BillId = payment.BillId,
-                Amount = payment.Amount,
+                Amount = (decimal)payment.Amount,
                 Method = payment.Method,
                 Status = "Pending",
                 CreatedAt = DateTime.Now

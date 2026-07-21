@@ -14,6 +14,7 @@ namespace POSbackend.Repository.implement.Product
                 .Include(p => p.Batch)
                 .Select(p => new ProductDetailDto
                 {
+                    ProductId = p.ProductId,
                     ImageUrl = p.ImageUrl,
                     CategoryName = p.Category.CategoryName,
                     ProductName = p.ProductName,

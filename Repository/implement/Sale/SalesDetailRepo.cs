@@ -27,7 +27,7 @@ namespace POSbackend.Repository.implement.Sale
         {
             var saleDetail = new SaleDetail
             {
-                SaleId = detail.SaleId,
+                SaleId = (int)detail.SaleId,
                 ProductId = detail.ProductId ?? 0,
                 Qty = detail.Quantity ?? 0,
                 UnitPrice = detail.UnitPrice ?? 0,
@@ -36,7 +36,7 @@ namespace POSbackend.Repository.implement.Sale
             _context.SaleDetails.Add(saleDetail);
             await _context.SaveChangesAsync();
 
-            await UpdateSaleTotals(detail.SaleId);
+            await UpdateSaleTotals((int)detail.SaleId);
         }
 
         private async Task UpdateSaleTotals(int saleId)

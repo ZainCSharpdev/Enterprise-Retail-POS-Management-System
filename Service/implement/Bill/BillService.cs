@@ -8,6 +8,7 @@ using POSbackend.DTO.Sale;
 using POSbackend.Models;
 using POSbackend.Repository.Interface.Bill;
 using POSbackend.Service.Interface.Bill;
+using System.Globalization;
 
 namespace POSbackend.Service.implement.Bill
 {
@@ -40,7 +41,7 @@ namespace POSbackend.Service.implement.Bill
             using (var memStreamed = new MemoryStream(pdf))
             {
                 var uploadResult = await _dropbox.Files.UploadAsync(
-                    $"Bills/{fileName}",
+                    $"/Bills/{fileName}",
                     WriteMode.Overwrite.Instance,
                     body: memStreamed);
 
@@ -74,31 +75,35 @@ namespace POSbackend.Service.implement.Bill
                 doc.Open();
 
                 // Title
-                var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18);
-                doc.Add(new Paragraph("Invoice / Bill", titleFont));
-                doc.Add(new Paragraph($"Bill ID: {bill.BillId}"));
+                doc.Add(new Paragraph("Invoice / Bill"));
                 doc.Add(new Paragraph($"Sale ID: {bill.SaleId}"));
-                doc.Add(new Paragraph($"Customer: {bill.CustomerNumber})"));
+                doc.Add(new Paragraph($"Customer: {bill.CustomerNumber}"));
                 doc.Add(new Paragraph($"Date: {DateTime.Now:dd-MMM-yyyy}"));
                 doc.Add(new Paragraph(" "));
 
+                // Table
                 var table = new PdfPTable(4);
-                table.AddCell("Product");
-                table.AddCell("Qty");
-                table.AddCell("Unit Price");
-                table.AddCell("Total Price");
+                table.AddCell(new Phrase("Product"));
+                table.AddCell(new Phrase("Qty"));
+                table.AddCell(new Phrase("Unit Price"));
+                table.AddCell(new Phrase("Total Price"));
 
-                foreach(var sd in saleDetails)
+                foreach (var sd in saleDetails)
                 {
-                    table.AddCell(sd.Product.ProductName);
-                    table.AddCell(sd.Qty.ToString());
-                    table.AddCell(sd.UnitPrice.ToString("C"));
-                    table.AddCell(sd.TotalPrice.ToString("C"));
+                    table.AddCell(new Phrase(sd.Product.ProductName));
+                    table.AddCell(new Phrase(sd.Qty.ToString()));
+                    table.AddCell(new Phrase(
+                        sd.UnitPrice.ToString("C", CultureInfo.CreateSpecificCulture("en-IN"))));
+                    table.AddCell(new Phrase(
+                        sd.TotalPrice.ToString("C", CultureInfo.CreateSpecificCulture("en-IN"))));
                 }
 
                 doc.Add(table);
                 doc.Add(new Paragraph(" "));
-                doc.Add(new Paragraph($"Grand Total : {saleHeader.TotalAmount:C}", titleFont));
+
+                // Grand total
+                doc.Add(new Paragraph(
+                    $"Grand Total : {saleHeader.TotalAmount.ToString("C", CultureInfo.CreateSpecificCulture("en-IN"))}"));
 
                 doc.Close();
                 return ms.ToArray();
