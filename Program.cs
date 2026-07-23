@@ -93,7 +93,6 @@ app.UseExceptionHandler(errorApp =>
                     message = "Unauthorized access.";
                     break;
 
-                    // Add more mappings if needed
             }
 
             context.Response.StatusCode = statusCode;
