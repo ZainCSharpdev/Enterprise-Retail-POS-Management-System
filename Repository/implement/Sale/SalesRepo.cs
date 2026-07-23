@@ -100,8 +100,10 @@ namespace POSbackend.Repository.implement.Sale
                 {
                     SaleDate = DateTime.Now,
                     CustomerNumber = customerNumber.ToString(),
-                    Status = "InProcess",
+                    Status = "",
                     Method = sale.Method,
+                    Discount = sale.Discount,
+                    Tax = (decimal)sale.Tax,
                     CreatedDate = DateTime.Now
                 };
 
@@ -133,6 +135,8 @@ namespace POSbackend.Repository.implement.Sale
                 sale.CustomerNumber = customerNumber;
                 sale.SaleDate = newSale.SaleDate;
                 sale.TotalAmount = newSale.TotalAmount;
+                sale.Discount = newSale.Discount;
+                sale.Tax = newSale.Tax;
                 sale.NetAmount = newSale.NetAmount;
                 sale.status = newSale.Status;
 

@@ -15,7 +15,7 @@ public partial class Sale
 
     public decimal? Discount { get; set; }
 
-    public decimal? Tax { get; set; }
+    public decimal Tax { get; set; }
 
     public decimal NetAmount { get; set; }
 

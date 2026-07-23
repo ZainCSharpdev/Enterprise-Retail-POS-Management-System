@@ -18,9 +18,9 @@ namespace POSbackend.Service.implement.Product
         {
             return _productRepo.SearchProductsAsync(keyword);
         }
-        public Task<ProductDetailDto> AddProductsAsync(ProductDetailDto details)
+        public Task<ProductDetailDto> AddProductsAsync(ProductDetailDto details,IFormFile photoFile)
         {
-            return _productRepo.AddProductsAsync(details);
+            return _productRepo.AddProductsAsync(details,photoFile);
         }
         public Task<ProductDetailDto?> UpdateProductsAsync(ProductDetailDto details, int Id)
         {

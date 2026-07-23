@@ -25,10 +25,10 @@ namespace POSbackend.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Add([FromBody] ProductDetailDto detail)
+        public async Task<IActionResult> Add([FromBody] ProductDetailDto detail,IFormFile phtotFile)
         {
-            var product = await _productService.AddProductsAsync(detail);
-            return Ok(product);
+            var product = await _productService.AddProductsAsync(detail,phtotFile);
+            return CreatedAtAction(nameof(GetById), new { id = product.ProductId }, product );
         }
 
         [HttpPut("{id}")]

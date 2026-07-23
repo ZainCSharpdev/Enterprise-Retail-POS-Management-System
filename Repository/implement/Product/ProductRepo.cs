@@ -1,11 +1,13 @@
-﻿using POSbackend.DTO.Product;
-using POSbackend.Models;
+﻿using Dropbox.Api;
 using Microsoft.EntityFrameworkCore;
+using POSbackend.DTO.Product;
+using POSbackend.Models;
 using POSbackend.Repository.Interface.Product;
+using static Dropbox.Api.TeamLog.ActorLogInfo;
 
 namespace POSbackend.Repository.implement.Product
 {
-    public class ProductRepo(PosdbContext _context) : IProductRepo
+    public class ProductRepo(PosdbContext _context,DropboxClient _dropbox) : IProductRepo
     {
         public async Task<IEnumerable<ProductDetailDto>> GetAllProductsAsync()
         {
@@ -58,8 +60,9 @@ namespace POSbackend.Repository.implement.Product
                 }).FirstOrDefaultAsync();
         }
 
-        public async Task<ProductDetailDto> AddProductsAsync(ProductDetailDto dto)
+        public async Task<ProductDetailDto> AddProductsAsync(ProductDetailDto dto,IFormFile photoFile)
         {
+            var photoUrl = await UploadProductPhotoAsync(photoFile);
 
             var products = new Models.Product
             {
@@ -70,7 +73,7 @@ namespace POSbackend.Repository.implement.Product
                 ExpiryDate = dto.ExpiryDate,
                 UnitPrice = dto.Unit_Price,
                 SetSize = dto.SetSize,
-                ImageUrl = dto.ImageUrl,
+                ImageUrl = photoUrl,
                 Category = new Category { CategoryName = dto.CategoryName },
                 Batch = new Batch { Batchnumber = dto.BatchNumber }
             };
@@ -88,11 +91,12 @@ namespace POSbackend.Repository.implement.Product
                 ExpiryDate = products.ExpiryDate,
                 Unit_Price = products.UnitPrice,
                 SetSize = products.SetSize,
-                ImageUrl = products.ImageUrl,
+                ImageUrl = photoUrl,
                 CategoryName = products.Category.CategoryName,
                 BatchNumber = (long)products.Batch.Batchnumber
             };
         }
+
         public async Task<ProductDetailDto?> UpdateProductsAsync(ProductDetailDto details, int Id)
         {
             var product = await _context.Products.FindAsync(Id);
@@ -133,6 +137,33 @@ namespace POSbackend.Repository.implement.Product
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+
+        private async Task<string?> UploadProductPhotoAsync(IFormFile photoFile)
+        {
+            if (photoFile == null) return null;
+
+            try
+            {
+                using var ms = new MemoryStream();
+                await photoFile.CopyToAsync(ms);
+                ms.Position = 0;
+
+                var fileName = $"product_{Guid.NewGuid()}_{photoFile.FileName}";
+                var uploadResult = await _dropbox.Files.UploadAsync(
+                    $"/Products/{fileName}",
+                    Dropbox.Api.Files.WriteMode.Overwrite.Instance,
+                    body: ms);
+
+                var link = await _dropbox.Sharing.CreateSharedLinkWithSettingsAsync(uploadResult.PathLower);
+
+                return $"{link.Url}?raw=1";
+            }
+            catch (Exception ex)
+            {
+                return null ;
+            }
         }
     }
 }

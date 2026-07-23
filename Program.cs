@@ -1,4 +1,5 @@
 using Dropbox.Api;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using POSbackend.Models;
 using POSbackend.Repository.implement.Bill;
@@ -15,10 +16,12 @@ using POSbackend.Service.implement.Bill;
 using POSbackend.Service.implement.Payment;
 using POSbackend.Service.implement.Product;
 using POSbackend.Service.implement.Sale;
+using POSbackend.Service.implement.Users;
 using POSbackend.Service.Interface.Bill;
 using POSbackend.Service.Interface.Payment;
 using POSbackend.Service.Interface.Products;
 using POSbackend.Service.Interface.Sales;
+using POSbackend.Service.Interface.Users;
 using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,7 +36,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ISalesService, SalesSService>();
 builder.Services.AddScoped<IBillService, BillService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
-
+builder.Services.AddScoped<IUserService, UserServer>();
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -59,6 +62,25 @@ builder.Services.AddCors(options =>
 
 
 var app = builder.Build();
+
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        var error = context.Features.Get<IExceptionHandlerFeature>();
+        if (error != null)
+        {
+            var result = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                message = "An unexpected error occured.",
+                detail = error.Error.Message
+            });
+            await context.Response.WriteAsync(result);
+        }
+    });
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

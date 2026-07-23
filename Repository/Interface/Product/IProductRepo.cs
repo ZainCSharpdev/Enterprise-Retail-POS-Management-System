@@ -7,7 +7,7 @@ namespace POSbackend.Repository.Interface.Product
         Task<IEnumerable<ProductDetailDto>> GetAllProductsAsync();
         Task<ProductDetailDto?> GetProductByIdAsync(int productId);
         Task<SearchDto> SearchProductsAsync(string keyword);
-        Task<ProductDetailDto> AddProductsAsync(ProductDetailDto details);
+        Task<ProductDetailDto> AddProductsAsync(ProductDetailDto details,IFormFile photoFile);
         Task<ProductDetailDto?> UpdateProductsAsync(ProductDetailDto details, int Id);
         Task<bool> DeleteProductsAsync(int productId);
     }

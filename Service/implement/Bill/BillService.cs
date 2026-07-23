@@ -57,7 +57,7 @@ namespace POSbackend.Service.implement.Bill
                 Amount = saleHeader.TotalAmount,
                 PdfUrl = billDto.PdfUrl,
                 BillImage = billDto.BillImage,
-                Status = "Paid",
+                Status = "Complited",
                 InsertedDate = DateTime.Now,
                 CustomerNumber = long.Parse(saleHeader.CustomerNumber)
             };
@@ -83,6 +83,9 @@ namespace POSbackend.Service.implement.Bill
 
                 // Table
                 var table = new PdfPTable(4);
+                table.WidthPercentage = 100;
+                table.SetWidths(new float[] { 40f, 15f, 20f, 25f });
+
                 table.AddCell(new Phrase("Product"));
                 table.AddCell(new Phrase("Qty"));
                 table.AddCell(new Phrase("Unit Price"));
@@ -93,17 +96,22 @@ namespace POSbackend.Service.implement.Bill
                     table.AddCell(new Phrase(sd.Product.ProductName));
                     table.AddCell(new Phrase(sd.Qty.ToString()));
                     table.AddCell(new Phrase(
-                        sd.UnitPrice.ToString("C", CultureInfo.CreateSpecificCulture("en-IN"))));
+                        $"₹{sd.UnitPrice.ToString("C", CultureInfo.CreateSpecificCulture("en-IN"))}"));
                     table.AddCell(new Phrase(
-                        sd.TotalPrice.ToString("C", CultureInfo.CreateSpecificCulture("en-IN"))));
+                        $"₹{sd.TotalPrice.ToString("C", CultureInfo.CreateSpecificCulture("en-IN"))} "));
                 }
 
                 doc.Add(table);
                 doc.Add(new Paragraph(" "));
 
+                doc.Add(new Paragraph(
+                   $"Sub Total : ₹{saleHeader.TotalAmount.ToString("C", CultureInfo.CreateSpecificCulture("en-IN"))}"));
+                doc.Add(new Paragraph(
+                   $"Grand Total : ₹{saleHeader.Tax.ToString("C", CultureInfo.CreateSpecificCulture("en-IN"))}"));
                 // Grand total
                 doc.Add(new Paragraph(
-                    $"Grand Total : {saleHeader.TotalAmount.ToString("C", CultureInfo.CreateSpecificCulture("en-IN"))}"));
+                    $"Grand Total : ₹{saleHeader.NetAmount.ToString("C", CultureInfo.CreateSpecificCulture("en-IN"))}"));
+
 
                 doc.Close();
                 return ms.ToArray();
