@@ -67,20 +67,50 @@ app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
     {
-        context.Response.StatusCode = 500;
-        context.Response.ContentType = "application/json";
         var error = context.Features.Get<IExceptionHandlerFeature>();
         if (error != null)
         {
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError(error.Error, "Unhandled exception occurred");
+
+            var statusCode = StatusCodes.Status500InternalServerError;
+            var message = "An unexpected error occurred.";
+
+            switch (error.Error)
+            {
+                case ArgumentException:
+                    statusCode = StatusCodes.Status400BadRequest;
+                    message = "Invalid request.";
+                    break;
+
+                case KeyNotFoundException:
+                    statusCode = StatusCodes.Status404NotFound;
+                    message = "Resource not found.";
+                    break;
+
+                case UnauthorizedAccessException:
+                    statusCode = StatusCodes.Status401Unauthorized;
+                    message = "Unauthorized access.";
+                    break;
+
+                    // Add more mappings if needed
+            }
+
+            context.Response.StatusCode = statusCode;
+            context.Response.ContentType = "application/json";
+
             var result = System.Text.Json.JsonSerializer.Serialize(new
             {
-                message = "An unexpected error occured.",
+                status = statusCode,
+                message,
                 detail = error.Error.Message
             });
+
             await context.Response.WriteAsync(result);
         }
     });
 });
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
