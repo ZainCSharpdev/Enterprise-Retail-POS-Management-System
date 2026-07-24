@@ -74,7 +74,7 @@ namespace POSbackend.Repository.implement.Product
                 UnitPrice = dto.Unit_Price,
                 SetSize = dto.SetSize,
                 ImageUrl = photoUrl,
-                Category = new Category { CategoryName = dto.CategoryName },
+                Category = new Models.Category { CategoryName = dto.CategoryName },
                 Batch = new Batch { Batchnumber = dto.BatchNumber }
             };
 

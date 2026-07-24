@@ -9,6 +9,14 @@ namespace POSbackend.Controllers
     [ApiController]
     public class UserController(IUserService _userService) : ControllerBase
     {
+        [HttpGet("{id}")]
+        public async Task<IActionResult>GetById(int id)
+        {
+            var user = await _userService.GetUserByIdAsync(id);
+            if (user == null) return NotFound();
+            return Ok(new {user.UserName});
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] loginDto login)
         {
