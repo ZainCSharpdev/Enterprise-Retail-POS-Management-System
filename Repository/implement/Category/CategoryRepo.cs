@@ -36,7 +36,8 @@ namespace POSbackend.Repository.implement.Category
             return await _context.Categories
                  .Select(p => new CategoryDto
                  {
-                     CategoryName = p.CategoryName,
+                     CategoryId = p.Categoryid,
+                     CategoryName = p.CategoryName
                  }).ToListAsync();
         }
 

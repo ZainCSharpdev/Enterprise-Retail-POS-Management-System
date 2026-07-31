@@ -28,6 +28,20 @@ namespace POSbackend.Repository.implement.Bill
             };
         }
 
+        public async Task<IEnumerable<BillDto>> GetAllAsync()
+        {
+            return await _context.Bills
+                .Select(b => new BillDto
+                {
+                    SaleId = (int)b.SaleId,
+                    PdfUrl = b.PdfUrl,
+                    Status = b.Status,
+                    Amount = b.Amount ?? 0,
+                    InsertedDate = b.InsertedDate ?? DateTime.Now,
+                    CustomerNumber = b.CustomerNumber ?? 0
+                }).ToListAsync();
+        }
+
         public async Task<IEnumerable<BillDto>> GetBillsBySaleAsync(int saleId)
         {
             return await _context.Bills

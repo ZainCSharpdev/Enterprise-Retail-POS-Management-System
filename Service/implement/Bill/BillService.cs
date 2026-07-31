@@ -118,6 +118,11 @@ namespace POSbackend.Service.implement.Bill
             }
         }
 
+        public async Task<IEnumerable<BillDto?>> GetBillsAsync()
+        {
+            return await _billRepo.GetAllAsync();
+        }
+
         public async Task<IEnumerable<BillDto>> GetBillsBySaleAsync(int saleId)
         {
             return await _billRepo.GetBillsBySaleAsync(saleId);

@@ -21,6 +21,13 @@ namespace POSbackend.Controllers
             return Ok(created);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetBillAsync()
+        {
+            var bill = await _billService.GetBillsAsync();
+            return Ok(bill);
+        }
+
         [HttpGet("sale/{saleId}")]
         public async Task<IActionResult> GetBySale(int saleId)
         {
